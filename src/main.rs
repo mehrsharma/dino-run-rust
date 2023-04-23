@@ -24,6 +24,7 @@ struct State {
     frame_time: f32,
     mode: GameMode,
     cacti: Vec<Cactus>,
+    score: i32,
 }
 
 impl State {
@@ -33,6 +34,7 @@ impl State {
             frame_time: 0.0,
             mode: GameMode::Menu,
             cacti: Vec::new(),
+            score: 0,
         }
     }
 
@@ -51,10 +53,12 @@ impl State {
         // player logic
         self.dino.render(ctx);
         ctx.print(0,0, "press SPACE to jump");
+        ctx.print(SCREEN_WIDTH-3,0, &format!("{}", self.score));
 
         // obstacle logic
         let mut rng = rand::thread_rng();
         if self.cacti.is_empty() || self.dino.x + SCREEN_WIDTH - self.cacti[self.cacti.len() - 1].x > rng.gen_range(5..self.dino.x + 50){
+            self.score += 1;
             self.cacti.push(Cactus::new(
                 self.dino.x + SCREEN_WIDTH,
                 rand::thread_rng().gen_range(0..3)
@@ -66,7 +70,15 @@ impl State {
                 self.mode = GameMode::End;
             }
         }
-
+        for n in 0..SCREEN_WIDTH {
+            ctx.set(
+                n,
+                SCREEN_HEIGHT - 8,
+                WHITE,
+                BLACK,
+                to_cp437('_'),
+            );
+        }
         if let Some(VirtualKeyCode::Q) = ctx.key {
             self.mode = GameMode::End;
         }   
@@ -77,6 +89,7 @@ impl State {
         self.frame_time = 0.0;
         self.mode = GameMode::Playing;
         self.cacti = Vec::new();
+        self.score = 0;
     }
 }
 
@@ -108,6 +121,7 @@ fn dead(state: &mut State, ctx: &mut BTerm) {
     ctx.set_active_console(1);
     ctx.cls();
     ctx.print_centered(5, "dino run!");
+    ctx.print_centered(6, &format!("you scored {} points", state.score));
     ctx.print_centered(8, "(p) play again");
     ctx.print_centered(9, "(q) quit game");
     ctx.set_fancy(

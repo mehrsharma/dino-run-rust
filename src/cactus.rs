@@ -1,7 +1,7 @@
 use bracket_lib::prelude::*;
 
 use crate::dino::Dinosaur;
-const CACTI : [u16; 4] = [ 49, 50, 51, 52 ];
+const CACTI : [u32; 4] = [ 87, 88, 89, 90 ];
 const SCREEN_HEIGHT: i32 = 25;
 
 pub struct Cactus {
@@ -22,13 +22,17 @@ impl Cactus {
         // let cactus: usize = rng.gen_range(0..3);
         let screen_x = self.x - dino_x + 5;
 
-        ctx.set(
-            screen_x,
-            SCREEN_HEIGHT - 8,
-            RED,
+        ctx.set_active_console(1);
+        ctx.set_fancy(
+            PointF::new(screen_x as f32, (SCREEN_HEIGHT - 7) as f32),
+            1,
+            Degrees::new(0.0),
+            PointF::new(2.0, 2.0),
+            WHITE,
             BLACK,
-            CACTI[self.cactus],
+            CACTI[self.cactus]
         );
+        ctx.set_active_console(0);
     }
 
     pub fn hit_obstacle(&self, dino: &mut Dinosaur) -> bool {
