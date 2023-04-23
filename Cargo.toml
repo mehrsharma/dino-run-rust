@@ -1,0 +1,8 @@
+[package]
+name = "dino_run"
+version = "0.1.0"
+authors = ["Mehr Sharma <mehrsharma@gmail.com>"]
+edition = "2021"
+
+[dependencies]
+bracket-lib = "~0.8.1"
