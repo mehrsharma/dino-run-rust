@@ -1,16 +1,16 @@
-#![warn(clippy::pedantic)]
-
 use bracket_lib::prelude::*;
+use dino_run::{
+    dino::Dinosaur,
+    cactus::Cactus,
+};
+use rand::Rng;
 
 const SCREEN_WIDTH: i32 = 40;
 const SCREEN_HEIGHT: i32 = 25;
 const FRAME_DURATION: f32 = 75.0;
-const SCREEN_HEIGHT_FLOAT: f32 = 25.0;
 
-
-const DINO_RUNNING : [u16; 2] = [ 3, 4 ];
-const DINO_DUCKING : [u16; 2] = [ 6, 7 ];
 const DINO_DEAD : [u16; 1] = [ 5 ];
+
 
 enum GameMode {
     Menu,
@@ -18,103 +18,54 @@ enum GameMode {
     End,
 }
 
-pub struct Player {
-    x: i32,
-    y: f32,
-    velocity: f32,
-    frame: usize // Usize to index arrays
-}
-
-impl Player {
-    pub fn new(x: i32, y: f32) -> Self {
-        Player {
-            x: 5,
-            y: SCREEN_HEIGHT_FLOAT - 7.0,
-            velocity: 0.0,
-            frame: 0,
-        }
-    }
-
-    pub fn render(&mut self, ctx: &mut BTerm) {
-        if let Some(VirtualKeyCode::Down) = ctx.key {
-            ctx.set_active_console(1);
-            ctx.cls();
-            ctx.set_fancy(
-                PointF::new(5.0, self.y),
-                1,
-                Degrees::new(0.0),
-                PointF::new(2.0, 2.0),
-                WHITE,
-                BLACK,
-                DINO_DUCKING[self.frame]
-            );
-            ctx.set_active_console(0);
-        } else {
-            ctx.set_active_console(1);
-            ctx.cls();
-            ctx.set_fancy(
-                PointF::new(5.0, self.y),
-                1,
-                Degrees::new(0.0),
-                PointF::new(2.0, 2.0),
-                WHITE,
-                BLACK,
-                DINO_RUNNING[self.frame]
-            );
-            ctx.set_active_console(0);
-        }
-    }
-    
-    pub fn gravity_and_move(&mut self) {
-        if self.velocity < 3.0 {
-            self.velocity += 0.5
-        }
-        self.y += self.velocity as f32;
-        self.x += 1;
-        if self.y < 0.0 {
-            self.y = 0.0;
-        }
-        if self.y > SCREEN_HEIGHT_FLOAT - 7.0 {
-            self.y = SCREEN_HEIGHT_FLOAT - 7.0;
-        }
-        self.frame += 1;
-        self.frame = self.frame % 2; 
-    }
-    pub fn jump(&mut self){
-        if self.y == SCREEN_HEIGHT_FLOAT - 7.0 {
-            self.velocity = -3.0;
-        }
-    }
-}
-
 
 struct State {
-    player: Player,
+    dino: Dinosaur,
     frame_time: f32,
     mode: GameMode,
+    cacti: Vec<Cactus>,
 }
 
 impl State {
     fn new() -> Self {
         State {
-            player: Player::new(5,25.0),
+            dino: Dinosaur::new(),
             frame_time: 0.0,
             mode: GameMode::Menu,
+            cacti: Vec::new(),
         }
     }
 
     fn play(&mut self, ctx: &mut BTerm) {
+        // frame logic
         ctx.cls();
         self.frame_time += ctx.frame_time_ms;
         if self.frame_time > FRAME_DURATION {
             self.frame_time = 0.0;
-            self.player.gravity_and_move()
+            self.dino.gravity_and_move()
         }
         if let Some(VirtualKeyCode::Space) = ctx.key {
-            self.player.jump();
+            self.dino.jump();
         }
-        self.player.render(ctx);
+
+        // player logic
+        self.dino.render(ctx);
         ctx.print(0,0, "press SPACE to jump");
+
+        // obstacle logic
+        let mut rng = rand::thread_rng();
+        if self.cacti.is_empty() || self.dino.x + SCREEN_WIDTH - self.cacti[self.cacti.len() - 1].x > rng.gen_range(5..self.dino.x + 50){
+            self.cacti.push(Cactus::new(
+                self.dino.x + SCREEN_WIDTH,
+                rand::thread_rng().gen_range(0..3)
+            ));
+        }
+        for cactus in self.cacti.iter_mut() {
+            cactus.render(ctx, self.dino.x);
+            if cactus.hit_obstacle(&mut self.dino) {
+                self.mode = GameMode::End;
+            }
+        }
 
         if let Some(VirtualKeyCode::Q) = ctx.key {
             self.mode = GameMode::End;
@@ -122,9 +73,10 @@ impl State {
     }
 
     fn restart(&mut self) {
-        self.player = Player::new(5,25.0);
+        self.dino = Dinosaur::new();
         self.frame_time = 0.0;
         self.mode = GameMode::Playing;
+        self.cacti = Vec::new();
     }
 }
 
