@@ -1,5 +1,5 @@
 # dino-run-rust
-Google Chrome's offline dinosaur game implemented as a Rust CLI! Dinosaur & cactus icons hand drawn and assembled into tileset using Procreate, inspiration from Herbert Wolverson's *Hands On Rust*
+Google Chrome's dino run implemented as a Rust CLI! Dinosaur & cactus icons drawn and assembled into tileset using Procreate, inspo from Herbert Wolverson's *Hands On Rust*
 
 <img width="634" alt="Screen Shot 2023-04-23 at 1 49 05 AM" src="https://user-images.githubusercontent.com/59990709/233822151-62c1a1e8-50af-49bf-bead-bc7c3e7a6df6.png">
 
